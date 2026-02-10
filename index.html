@@ -3,258 +3,140 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tersys - Gestão de Medições</title>
+    <title>VUX Control - Medições</title>
+    <link rel="icon" href="data:,"> <script src="https://cdn.tailwindcss.com"></script>
     
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
     <script src="https://unpkg.com/lucide@latest"></script>
+    
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link rel="icon" href="data:,">
+
     <style>
-        body {
-            background: radial-gradient(circle at top left, #1e293b, #0f172a);
-            min-height: 100vh;
-            color: white;
-            font-family: 'Inter', sans-serif;
-        }
-
-        /* Glassmorphism Classes */
-        .glass-card {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-        }
-
-        .glass-nav {
-            background: rgba(15, 23, 42, 0.7);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .glass-input {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: white;
-            transition: all 0.3s ease;
-        }
-
-        .glass-input:focus {
-            background: rgba(255, 255, 255, 0.1);
-            border-color: #3b82f6;
-            outline: none;
-            box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-            transition: transform 0.2s;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
-        }
-
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+        body { background: radial-gradient(circle at top left, #1e293b, #0f172a); min-height: 100vh; color: white; font-family: sans-serif; }
+        .glass-card { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; }
+        .glass-nav { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(10px); border-right: 1px solid rgba(255, 255, 255, 0.1); }
+        .btn-primary { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); transition: all 0.2s; }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4); }
+        input[type="file"]::file-selector-button { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 4px 12px; border-radius: 8px; cursor: pointer; }
     </style>
 </head>
 <body>
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, useMemo } = React;
-        const { createClient } = window.supabase; 
+        // Acessando as bibliotecas através do escopo global window
+        const { useState, useEffect } = React;
+        const { createClient } = window.supabase;
+
+        // --- CONFIGURAÇÃO (SUBSTITUA PELOS SEUS DADOS) ---
+        const SUPABASE_URL = 'https://SUA_URL.supabase.co';
+        const SUPABASE_KEY = 'SUA_KEY';
+        const MAPBOX_TOKEN = 'SEU_TOKEN_MAPBOX';
+        // ------------------------------------------------
+
         const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-        // CONFIGURAÇÕES (Mantenha suas chaves)
-        const SUPABASE_URL = 'https://ccktnhugjrgeafmialib.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNja3RuaHVnanJnZWFmbWlhbGliIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3MDYzNzUsImV4cCI6MjA4MzI4MjM3NX0.WB5OQFkFrufYcfzwJpJ7Jf2iZxcwPTpplfzDSeU_OQg';
-        
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        
+
         function App() {
-    const [activeTab, setActiveTab] = useState('dashboard');
-    const [filtroTerceiro, setFiltroTerceiro] = useState('Todos');
-    const [periodoAtual, setPeriodoAtual] = useState({ inicio: '2026-01-21', fim: '2026-02-20' });
-    const [dadosMedicao, setDadosMedicao] = useState({ producao: [], adicionais: [], descontos: [] });
-    const [loading, setLoading] = useState(false);
+            const [activeTab, setActiveTab] = useState('medicao');
+            const [medicoes, setMedicoes] = useState([]);
+            const [loading, setLoading] = useState(false);
 
-    // 1. BUSCA DE DADOS CONSOLIDADA (Extratos)
-    const fetchData = async () => {
-        setLoading(true);
-        // Busca Produção + Adicionais + Abastecimentos (Descontos)
-        const [resProd, resAdd, resDesc] = await Promise.all([
-            supabase.from('producao').select('*, concessao(valor_fixo_km, fornecedor), parametro_usinas(filial_puzl)'),
-            supabase.from('adicionais').select('*'),
-            supabase.from('abastecimentos').select('*')
-        ]);
+            useEffect(() => {
+                lucide.createIcons();
+                carregarDados();
+            }, [activeTab]);
 
-        setDadosMedicao({
-            producao: resProd.data || [],
-            adicionais: resAdd.data || [],
-            descontos: resDesc.data || []
-        });
-        setLoading(false);
-    };
-
-    useEffect(() => { fetchData(); }, []);
-
-    // 2. LÓGICA DE FECHAMENTO EM LOTE
-    const executarFechamentoLote = async () => {
-        if(!confirm("Deseja fechar todos os períodos ativos (21 a 20)? Esta ação travará edições.")) return;
-        
-        const { error } = await supabase
-            .from('fechamento_periodo')
-            .insert([{ 
-                data_inicio: periodoAtual.inicio, 
-                data_fim: periodoAtual.fim, 
-                status: 'Fechado',
-                fechado_por: 'Sistema' 
-            }]);
-        
-        if (error) alert("Erro ao fechar: " + error.message);
-        else alert("Período fechado com sucesso!");
-    };
-
-    // 3. COMPONENTE DE TABELA (EXTRATO) - Glassmorphism
-    const ExtratoTable = ({ titulo, colunas, dados, cor }) => (
-        <div className="glass-card p-4 mb-6">
-            <h3 className={`text-lg font-bold mb-4 flex items-center gap-2 ${cor}`}>
-                <div className={`w-2 h-6 rounded ${cor.replace('text', 'bg')}`}></div>
-                {titulo}
-            </h3>
-            <div className="overflow-x-auto">
-                <table className="w-full text-sm text-left">
-                    <thead>
-                        <tr className="text-slate-400 border-b border-white/10 text-xs uppercase">
-                            {colunas.map(c => <th key={c} className="p-3">{c}</th>)}
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/5">
-                        {dados.map((row, i) => (
-                            <tr key={i} className="hover:bg-white/5">
-                                {Object.values(row).map((val, j) => <td key={j} className="p-3">{val}</td>)}
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    );
-
-    return (
-        <div className="flex min-h-screen text-slate-200">
-            {/* Sidebar Otimizada */}
-            <nav className="w-72 glass-nav p-6 space-y-2">
-                <div className="mb-10 px-4">
-                    <h1 className="text-2xl font-black bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">VUX MEDIÇÃO</h1>
-                </div>
+            async function carregarDados() {
+                setLoading(true);
+                const { data, error } = await supabase
+                    .from('producao')
+                    .select('*, parametro_usinas(filial_puzl), concessao(valor_fixo_km)');
                 
-                <button onClick={() => setActiveTab('dashboard')} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 transition ${activeTab === 'dashboard' ? 'bg-blue-600 shadow-lg' : 'hover:bg-white/5'}`}>
-                    <i data-lucide="layout-dashboard"></i> Dashboard
-                </button>
-                <button onClick={() => setActiveTab('parametros')} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 transition ${activeTab === 'parametros' ? 'bg-blue-600 shadow-lg' : 'hover:bg-white/5'}`}>
-                    <i data-lucide="settings-2"></i> Parâmetros
-                </button>
-                <button onClick={() => setActiveTab('medicao')} className={`w-full text-left p-3 rounded-xl flex items-center gap-3 transition ${activeTab === 'medicao' ? 'bg-blue-600 shadow-lg' : 'hover:bg-white/5'}`}>
-                    <i data-lucide="file-spreadsheet"></i> Tela de Medição
-                </button>
-                
-                <div className="mt-10 pt-6 border-t border-white/10">
-                    <button onClick={executarFechamentoLote} className="w-full bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 p-3 rounded-xl hover:bg-emerald-600 hover:text-white transition flex items-center justify-center gap-2">
-                        <i data-lucide="lock"></i> Fechar Período
-                    </button>
-                </div>
-            </nav>
+                if (data) setMedicoes(data);
+                setLoading(false);
+            }
 
-            {/* Main Area */}
-            <main className="flex-1 p-8 overflow-y-auto">
-                {activeTab === 'medicao' && (
-                    <div className="animate-in fade-in duration-500">
-                        <header className="flex justify-between items-end mb-8">
-                            <div>
-                                <p className="text-emerald-400 font-mono text-sm">Medição Ativa: {periodoAtual.inicio} à {periodoAtual.fim}</p>
-                                <h2 className="text-3xl font-bold">Acompanhamento de Terceiros</h2>
-                            </div>
-                            <div className="flex gap-4">
-                                <select 
-                                    className="glass-input p-2 rounded-lg"
-                                    onChange={(e) => setFiltroTerceiro(e.target.value)}
-                                >
-                                    <option>Todos os Fornecedores</option>
-                                    {/* Mapear fornecedores únicos aqui */}
-                                </select>
-                                <button className="btn-primary px-6 py-2 rounded-lg font-bold">Gerar PDF Individual</button>
-                            </div>
-                        </header>
+            const formatKM = (val) => val ? `${val}` : "0"; // Apenas o número para cópia
 
-                        {/* EXTRATOS DETALHADOS */}
-                        <ExtratoTable 
-                            titulo="Extrato de Produção (Receita)" 
-                            cor="text-blue-400"
-                            colunas={['Data', 'Placa', 'OS', 'Volume', 'KM', 'Subtotal']}
-                            dados={dadosMedicao.producao.map(p => ({
-                                d: p.data_servico,
-                                pl: p.equipamento,
-                                os: p.os,
-                                v: p.volume + 'm³',
-                                km: p.distancia_km,
-                                t: 'R$ ' + (p.volume * (p.concessao?.valor_fixo_km || 0) * p.distancia_km).toFixed(2)
-                            }))}
-                        />
-
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            <ExtratoTable 
-                                titulo="Extrato de Adicionais" 
-                                cor="text-emerald-400"
-                                colunas={['Data', 'Descrição', 'Valor']}
-                                dados={dadosMedicao.adicionais.map(a => ({ d: a.data, desc: a.adicional, v: 'R$ ' + a.total }))}
-                            />
-                            <ExtratoTable 
-                                titulo="Extrato de Descontos (Diesel/Despesas)" 
-                                cor="text-red-400"
-                                colunas={['Data', 'Placa', 'Plataforma', 'Total']}
-                                dados={dadosMedicao.descontos.map(d => ({ d: d.data_transacao, p: d.placa, plat: d.plataforma, v: 'R$ ' + d.valor_total }))}
-                            />
+            return (
+                <div className="flex min-h-screen">
+                    {/* Sidebar */}
+                    <nav className="w-64 glass-nav p-6 flex flex-col gap-4">
+                        <div className="text-xl font-bold mb-8 flex items-center gap-2">
+                            <i data-lucide="shield-check" className="text-blue-400"></i> VUX Control
                         </div>
-                    </div>
-                )}
+                        
+                        <button onClick={() => setActiveTab('medicao')} className={`flex items-center gap-3 p-3 rounded-xl transition ${activeTab === 'medicao' ? 'bg-blue-600 shadow-lg' : 'hover:bg-white/5'}`}>
+                            <i data-lucide="table-2"></i> Medições
+                        </button>
+                        <button onClick={() => setActiveTab('parametros')} className={`flex items-center gap-3 p-3 rounded-xl transition ${activeTab === 'parametros' ? 'bg-blue-600 shadow-lg' : 'hover:bg-white/5'}`}>
+                            <i data-lucide="settings"></i> Parâmetros
+                        </button>
+                    </nav>
 
-                {activeTab === 'parametros' && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {/* Cards de atalho para tabelas de parâmetros */}
-                        {['Placas', 'Usinas', 'Localização', 'Terceiros', 'Adicionais'].map(item => (
-                            <div key={item} className="glass-card p-6 hover:border-blue-500/50 cursor-pointer transition group">
-                                <div className="flex justify-between items-start mb-4">
-                                    <div className="p-3 bg-blue-500/20 rounded-lg group-hover:bg-blue-500 transition">
-                                        <i data-lucide="database" className="w-6 h-6"></i>
+                    {/* Conteúdo */}
+                    <main className="flex-1 p-8">
+                        {activeTab === 'medicao' ? (
+                            <div className="animate-in fade-in duration-500">
+                                <div className="flex justify-between items-center mb-8">
+                                    <h2 className="text-3xl font-bold">Acompanhamento de Produção</h2>
+                                    <div className="flex gap-4 items-center">
+                                        <label className="text-sm bg-white/5 p-2 rounded-lg border border-white/10">
+                                            Importar Produção: 
+                                            <input type="file" className="ml-2 text-xs" />
+                                        </label>
+                                        <button className="btn-primary px-6 py-2 rounded-lg font-bold">Fechar Período</button>
                                     </div>
-                                    <span className="text-xs text-slate-500 font-mono">TABELA_{item.toUpperCase()}</span>
                                 </div>
-                                <h3 className="text-xl font-bold">{item}</h3>
-                                <p className="text-sm text-slate-400 mt-2">Gerenciar registros e vigências de {item.toLowerCase()}.</p>
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </main>
-        </div>
-    );
-}
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(<App />);
-setTimeout(() => lucide.createIcons(), 500);
+                                <div className="glass-card overflow-hidden">
+                                    <table className="w-full text-left">
+                                        <thead>
+                                            <tr className="bg-white/5 text-slate-400 text-xs uppercase">
+                                                <th className="p-4">Data</th>
+                                                <th className="p-4">Placa</th>
+                                                <th className="p-4">Filial</th>
+                                                <th className="p-4">Volume</th>
+                                                <th className="p-4">KM (Mapbox)</th>
+                                                <th className="p-4">Total (R$)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-white/5">
+                                            {medicoes.map((m, i) => (
+                                                <tr key={i} className="hover:bg-white/5 transition-colors">
+                                                    <td className="p-4">{new Date(m.data_servico).toLocaleDateString('pt-BR')}</td>
+                                                    <td className="p-4 font-mono">{m.equipamento}</td>
+                                                    <td className="p-4">{m.parametro_usinas?.filial_puzl}</td>
+                                                    <td className="p-4">{m.volume} m³</td>
+                                                    <td className="p-4 text-emerald-400 font-bold">{formatKM(m.distancia_km)}</td>
+                                                    <td className="p-4 font-bold">R$ {(m.volume * (m.concessao?.valor_fixo_km || 0) * m.distancia_km).toFixed(2)}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                {['Usinas', 'Placas', 'Concessões', 'Adicionais', 'Terceiros'].map(p => (
+                                    <div key={p} className="glass-card p-6 hover:bg-white/10 cursor-pointer transition">
+                                        <h3 className="text-xl font-bold mb-2">{p}</h3>
+                                        <p className="text-slate-400 text-sm">Gerenciar dados da tabela de {p.toLowerCase()}.</p>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </main>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
     </script>
 </body>
-
 </html>
-
-
